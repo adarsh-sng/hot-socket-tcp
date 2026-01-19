@@ -1,0 +1,28 @@
+{
+  "name": "hot-socket-tcp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "client": "node src/client.ts",
+    "server": "node src/server.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adarsh-sng/hot-socket-tcp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/adarsh-sng/hot-socket-tcp/issues"
+  },
+  "homepage": "https://github.com/adarsh-sng/hot-socket-tcp#readme",
+  "devDependencies": {
+    "@types/node": "^25.0.9",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
