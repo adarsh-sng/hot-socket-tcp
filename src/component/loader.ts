@@ -1,4 +1,4 @@
-const animateLoader = () => {
+const animateLoader = (text: string) => {
   // const loaderFrames = ["·", "✻", "✽", "✶", "✳", "✢",""];
   // const loaderFrames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
   const loaderFrames = ["❀", "❁", "❂", "❃", "❈", "✦", "✧", "✳", "✶", "✽"];
@@ -12,7 +12,7 @@ const animateLoader = () => {
   let colorIndex = 0;
 
   return setInterval(() => {
-    process.stdout.write(`\r ${colorCodes}${loaderFrames[frameIndex]} Starting the game${reset}`);
+    process.stdout.write(`\r ${colorCodes}${loaderFrames[frameIndex]} ${text}${reset}`);
     process.stdout.write(hideCursor);
     frameIndex = (frameIndex + 1) % loaderFrames.length;
     // colorIndex = (colorIndex + 1) % colorCodes.length;
@@ -20,4 +20,3 @@ const animateLoader = () => {
 };
 
 export default animateLoader;
-animateLoader();

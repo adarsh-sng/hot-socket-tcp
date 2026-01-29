@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "client": "node src/client.ts",
-    "server": "node src/server.ts"
+    "client": "bun src/client.ts",
+    "server": "bun src/server.ts",
+    "start":"bun src/game.ts"
   },
   "repository": {
     "type": "git",

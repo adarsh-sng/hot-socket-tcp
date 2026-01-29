@@ -1,19 +1,33 @@
 import net from "net";
-import { encodeMessage } from "./protocol.ts";
+import { PacketParser } from "./service/protocol.ts";
+import { GameMode, JoinPacket, LeavePacket, PacketType } from "./types.ts";
 
+let encode = PacketParser.encode;
 const client = new net.Socket();
-
-client.connect(3000, "127.0.0.1", () => {
-  console.log("Connected!");
-
-  // SENDING 5 MESSAGES INSTANTLY
-  // These are valid JSON individually: {"name":"Player"}
-  const msg = { name: "Adarsh" };
-  
-  // We write them one after another without waiting
-  client.write(encodeMessage(msg));
-  client.write(encodeMessage(msg));
-  client.write(encodeMessage(msg));
-  client.write(encodeMessage(msg));
- 
+client.on('error', (err) => {
+    console.log("❌ Failed to connect to the server:", err.message);
 });
+export const connectClient =  (ip: string) => {
+  client.connect(3000, ip);
+}
+client.on("connect",()=>{
+  let joinPacket:JoinPacket = {
+    type: PacketType.JOIN,
+    payload: {
+      name: "Player1",
+      preferredMode: GameMode.HOT_POTATO
+    }
+  }
+  client.write(encode(joinPacket))
+  console.log("Connected to the server");
+})
+
+
+client.on("close",()=>{
+  const leavePacket:LeavePacket = {
+    type: PacketType.LEAVE
+  };
+  client.write(encode(leavePacket));
+  console.log("Connection closed");
+
+})
