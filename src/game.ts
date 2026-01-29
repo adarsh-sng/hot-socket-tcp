@@ -2,7 +2,6 @@ import * as readline from 'node:readline';
 import { connectClient } from './client';
 import { boxen } from './component/boxen';
 import animateLoader from './component/loader';
-import { clear } from 'node:console';
 
 readline.emitKeypressEvents(process.stdin);
 
@@ -31,16 +30,24 @@ export const renderStartScreen = () => {
     console.log("      Welcome to Hot Socket!      ");
     console.log("===================================");
     
-    console.log("");
+  
+
     console.log("Instructions:");
     console.log(boxen("1. Press [ENTER] to start the game.\n2. Press [Ctrl+C] to exit.", 1));
     loaderId = animateLoader("waiting for you to start the game... Press [ENTER]");
     console.log("");
 }
-
+let name=""
+const getName =()=>{
+    
+}
+process.on("data",(char)=>{
+    name=name+char.toString();
+})
 
 function startGame() {
     clearInterval(loaderId);
+    process.stdout.write("\x1b[?25h"); // Show cursor
     console.log("\n🚀 Game Started! (Initializing connection...)");
     connectClient("127.0.0.1");
 }

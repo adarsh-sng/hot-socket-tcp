@@ -25,14 +25,32 @@ export interface Player {
   id: string;
   name: string;
   preferredMode?: GameMode;
+  socket: any; // socket reference
 }
-interface PlayerSession {
+
+export interface PlayerSession {
   player: Player;
-  socket: net.Socket;
+  socket: any;
   score: number;
-  hasAnswered: boolean;
   isActive: boolean; // whose turn it is
 }
+
+export interface ActiveQuestion {
+  problemId: string;
+  text: string;
+  correctAnswer: string;
+  startTime: number;
+  deadline: number;
+}
+
+export interface QuestionResult {
+  problemId: string;
+  playerId: string;
+  answer: string;
+  correct: boolean;
+  timestamp: number;
+}
+
 export interface GameSession {
   id: string;
   player1: PlayerSession;
