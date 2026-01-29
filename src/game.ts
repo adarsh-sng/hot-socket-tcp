@@ -53,3 +53,11 @@ function startGame() {
 }
 
 renderStartScreen();
+
+
+export const renderFrame =()=>{
+    console.clear();
+    setInterval(()=>{
+        console.log("Rendering game frame...");
+    },1000/60);
+}
