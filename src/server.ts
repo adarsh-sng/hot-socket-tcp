@@ -1,40 +1,23 @@
 import net from "node:net";
 import { PacketParser } from "./service/protocol.ts";
-import type { GameStartPacket,  Player }from "./types.ts";
-import { addToQueue, removeFromQueue, tryMatch } from "./service/gameLogic.ts";
-import { GameMode, PacketType } from "./types.ts";
-import { GameManager, startGamePacket } from "./service/gameConnection.ts";
-
-
-
-
+import {  PacketType } from "./types.ts";
+import { GameManager} from "./service/gameConnection.ts";
 
 const server = net.createServer((socket) => {
   console.log("Client connected!");
-  
   const paketParser= new PacketParser();
   const gameManager = new GameManager();
-  let chunkCount =1;
+  let ip = socket.remoteAddress+":"+socket.remotePort;
   socket.on("data", (data: Buffer) => {
     const messages = paketParser.parse(data);
     for (const message of messages) {
-    
     gameManager.handlePacket(socket, message);
-  
-
-      if(message.type === "LEAVE"){
-        console.log(`Player left: ${player.name} (${player.id})`);
-        socket.end();
-      }
-      if(message.type === "SUBMIT"){
-        console.log(`Player ${player.name} submitted answer: ${message.payload.answer}`);
-      }
     }
-    chunkCount++;
+  
   });
   socket.on("close", () => {
-    console.log(`Player disconnected ${player.id}`);
-    removeFromQueue(player.id);
+   gameManager.handleLeave(socket, {type: PacketType.LEAVE});
+    console.log(`Client disconnected! ${ip}`);
   });
 });
 
