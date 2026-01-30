@@ -1,7 +1,8 @@
 import * as readline from 'node:readline';
-import { connectClient } from './client';
-import { boxen } from './ui/component/boxen';
-import animateLoader from './ui/component/loader';
+import { connectClient } from '../client';
+import { boxen } from './component/boxen';
+import animateLoader from './component/loader';
+import { GameConfig } from '../config';
 
 readline.emitKeypressEvents(process.stdin);
 
@@ -49,7 +50,7 @@ function startGame() {
     clearInterval(loaderId);
     process.stdout.write("\x1b[?25h"); // Show cursor
     console.log("\n🚀 Game Started! (Initializing connection...)");
-    connectClient("127.0.0.1");
+    connectClient(GameConfig.SERVER_IP);
 }
 
 renderStartScreen();

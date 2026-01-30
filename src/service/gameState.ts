@@ -1,12 +1,12 @@
 import { GameMode, GameSession, GameState, Player } from "../types";
 import { randomUUID } from 'crypto';
+import { GameConfig } from "../config.ts";
 export const games = new Map<string, GameSession>(); // gameId -> GameSession
 export const playerToGame = new Map<string, string>(); // 1. playerId -> gameId
 export const socketToPlayer = new Map<any, string>(); // 2. socket -> playerId
 const waitingQueue: Player[] = [];
 
 export function addToQueue(player: Player): string | null {
-  // Check if already in queue
   if (waitingQueue.find(p => p.id === player.id)) {
     return null;
   }
@@ -42,7 +42,7 @@ export function createGame(player1: Player, player2: Player): string {
       player: player1,
       socket: player1.socket,
       score: 0,
-      isActive: true  
+      isActive: true
     },
     player2: {
       player: player2,
@@ -55,7 +55,7 @@ export function createGame(player1: Player, player2: Player): string {
     gameTimer: null,
     questionTimer: null
   };
-  
+
   games.set(gameId, gameSession);
   playerToGame.set(player1.id, gameId);
   playerToGame.set(player2.id, gameId);
@@ -83,16 +83,16 @@ export function getPlayerIdBySocket(socket: any): string | undefined {
 export function removeGame(gameId: string): void {
   const game = games.get(gameId);
   if (!game) return;
-  
+
   // Clear timers
   if (game.gameTimer) clearTimeout(game.gameTimer);
   if (game.questionTimer) clearTimeout(game.questionTimer);
-  
+
   // Remove from maps
   playerToGame.delete(game.player1.player.id);
   playerToGame.delete(game.player2.player.id);
   games.delete(gameId);
-  
+
   console.log(`Game removed: ${gameId}`);
 }
 
@@ -103,13 +103,12 @@ export function getActiveGames(): GameSession[] { // get all active games
 
 export function cleanupStaleGames(): void {
   const now = Date.now();
-  const STALE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
-  
+
   for (const [gameId, game] of games.entries()) {
-    if (now - game.startTime > STALE_THRESHOLD) {
+    if (now - game.startTime > GameConfig.STALE_GAME_THRESHOLD) {
       console.log(`Cleaning up stale game: ${gameId}`);
       removeGame(gameId);
     }
   }
 }
-setInterval(cleanupStaleGames, 60_000); // Auto-cleanup every 60 seconds
+setInterval(cleanupStaleGames, GameConfig.STALE_GAME_CLEANUP_INTERVAL);
