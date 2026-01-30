@@ -93,26 +93,33 @@ export class GameManager {
     removeFromQueue(playerId);
     const game = getGameBySocket(socket);
     if (game) {
+      if (game.gameTimer) clearTimeout(game.gameTimer);
+      if (game.questionTimer) clearTimeout(game.questionTimer);
       const packet = endGamePacket(true, "Opponent left the game.");
       const opponentSocket = game.player1.player.id === playerId ? game.player2.socket : game.player1.socket;
       opponentSocket.write(encode(packet));
+      removeGame(game.id);
     }
   }
   handleSubmit(socket: any, message: SubmitPacket) {
     const game = getGameBySocket(socket);
     if (!game || !game.currentQuestion) return;
-    const correct = (message.payload.answer === game.currentQuestion.correctAnswer);
+    const correct = (message.payload.answer.toLowerCase().trim() === game.currentQuestion.correctAnswer.toLowerCase().trim());
     if (correct) {
-      let packet:ResultPacket ={
+      if (game.questionTimer) {
+        clearTimeout(game.questionTimer);
+        game.questionTimer = null;
+      }
+      let packet: ResultPacket = {
         type: PacketType.RESULT,
         payload: {
           correct: true,
           message: "Correct! You passed the bomb!"
-        } 
+        }
       }
       socket.write(encode(packet));
-      let  activePlayer = game.player1.isActive ? game.player1 : game.player2;
-       activePlayer.score++;
+      let activePlayer = game.player1.isActive ? game.player1 : game.player2;
+      activePlayer.score++;
       switchActivePlayer(game);
       const question = getRandomQuestion(game.usedQuestionIds);
       game.currentQuestion = createActiveQuestion(question, 15000);
@@ -122,6 +129,15 @@ export class GameManager {
         game.currentQuestion.text,
         game.currentQuestion.deadline
       )));
+      game.questionTimer = setTimeout(() => {
+      let activePlayer = game.player1.isActive ? game.player1 : game.player2;
+      let packet = endGamePacket(false, "Time's up! You couldn't answer in time");
+      activePlayer.socket.write(encode(packet))
+      packet = endGamePacket(true, "You won! your opponent couldnt answer in time");
+      let opponentPlayer = game.player1.isActive ? game.player2 : game.player1;
+      opponentPlayer.socket.write(encode(packet))
+      removeGame(game.id);
+      }, 15000);
     }
     else {
       let packet = endGamePacket(false, "Wrong answer! You lost.");
@@ -145,7 +161,9 @@ export class GameManager {
       let activePlayer = game.player1.isActive ? game.player1 : game.player2;
       let packet = endGamePacket(false, "Time's up! You couldn't answer in time");
       activePlayer.socket.write(encode(packet))
-      packet=endGamePacket(true, "You won! your opponent couldnt answer in time");
+      packet = endGamePacket(true, "You won! your opponent couldnt answer in time");
+      let opponentPlayer = game.player1.isActive ? game.player2 : game.player1;
+      opponentPlayer.socket.write(encode(packet))
       removeGame(game.id);
     }, 15000); // 15 seconds to answer
     game.gameTimer = setTimeout(() => {
@@ -169,8 +187,6 @@ export class GameManager {
       }
       removeGame(game.id);
     }, 60000); // 60 seconds for the entire game
-    switchActivePlayer(game);
-    game.questionTimer = null
     console.log(`Question sent to ${activePlayer.player.name}: ${game.currentQuestion.text}`);
   }
 

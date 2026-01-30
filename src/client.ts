@@ -24,10 +24,10 @@ client.on("connect",()=>{
 
 
 client.on("close",()=>{
-  const leavePacket:LeavePacket = {
-    type: PacketType.LEAVE
-  };
-  client.write(encode(leavePacket));
+  // const leavePacket:LeavePacket = { // wont run, since socket is closed 
+  //   type: PacketType.LEAVE
+  // };
+  // client.write(encode(leavePacket));
   console.log("Connection closed");
 
 })
