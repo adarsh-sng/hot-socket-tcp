@@ -25,6 +25,7 @@ export interface Player {
   id: string;
   name: string;
   preferredMode?: GameMode;
+  // score: number;
   socket: any; // socket reference
 }
 
@@ -59,7 +60,7 @@ export interface GameSession {
   state: GameState;
   currentQuestion: ActiveQuestion | null;
   startTime: number;
-  questionHistory: QuestionResult[];
+  usedQuestionIds: string[];
   
   // Timers
   gameTimer: NodeJS.Timeout | null;

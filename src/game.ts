@@ -1,7 +1,7 @@
 import * as readline from 'node:readline';
 import { connectClient } from './client';
-import { boxen } from './component/boxen';
-import animateLoader from './component/loader';
+import { boxen } from './ui/component/boxen';
+import animateLoader from './ui/component/loader';
 
 readline.emitKeypressEvents(process.stdin);
 

@@ -51,7 +51,7 @@ export function createGame(player1: Player, player2: Player): string {
       isActive: false
     },
     currentQuestion: null,
-    questionHistory: [],
+    usedQuestionIds: [],
     gameTimer: null,
     questionTimer: null
   };

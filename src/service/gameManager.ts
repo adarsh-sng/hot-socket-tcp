@@ -1,8 +1,9 @@
-import { GameMode, GameStartPacket, PacketType } from "../types.ts";
+import { GameMode, GameStartPacket, PacketType, type GameSession } from "../types.ts";
 import { addToQueue, games, getGameBySocket, removeFromQueue, removeGame, socketToPlayer, tryMatch } from "./gameLogic.ts";
 import { PacketParser } from "./protocol.ts";
-import type { GameEndPacket, GamePacket, JoinPacket, LeavePacket, Player, SubmitPacket } from "../types.ts";
+import type { GameEndPacket, GamePacket, JoinPacket, LeavePacket, Player, ResultPacket, SubmitPacket } from "../types.ts";
 import { randomUUID } from "node:crypto";
+import { createActiveQuestion, getRandomQuestion } from "./questionManager.ts";
 
 let encode = PacketParser.encode;
 
@@ -26,6 +27,27 @@ export const endGamePacket = (won: boolean, reason: string): GameEndPacket => {
   }
 }
 
+export const switchActivePlayer = (game: GameSession) => {
+  if (game.player1.isActive) {
+    game.player1.isActive = false;
+    game.player2.isActive = true;
+  } else {
+    game.player1.isActive = true;
+    game.player2.isActive = false;
+  }
+}
+
+export const questionPacket = (problemId: string, text: string, deadline: number): GamePacket => {
+  return {
+    type: PacketType.QUESTION,
+    payload: {
+      problemId,
+      text,
+      deadline
+    }
+  }
+}
+
 export class GameManager {
   handlePacket(socket: any, message: any) {
     switch (message.type) {
@@ -39,7 +61,7 @@ export class GameManager {
       id: randomUUID().toString(),
       name: message.payload.name,
       preferredMode: message.payload.preferredMode,
-      socket: socket
+      socket: socket,
     };
     const gameId = addToQueue(player);
     if (gameId) {
@@ -60,6 +82,7 @@ export class GameManager {
       );
       player2.socket.write(encode(packet2));
       console.log(`Game started: ${player1.player.name} vs ${player2.player.name}`);
+      this.handleStartGame(game);
     } else {
       console.log(`${player.name} added to queue, waiting for opponent...`);
     }
@@ -82,11 +105,34 @@ export class GameManager {
 
     // 3. If correct → pass bomb
     if (correct) {
-
-      // Switch active player
-      // Generate new question
-      // Send QUESTION packet to opponent
-      // Send RESULT packet to this player (you passed the bomb!)
+      let packet:ResultPacket ={
+        type: PacketType.RESULT,
+        payload: {
+          correct: true,
+          message: "Correct! You passed the bomb!"
+        } 
+      }
+      socket.write(encode(packet));
+      let  activePlayer = game.player1.isActive ? game.player1 : game.player2;
+       activePlayer.score++;
+      // const opponentSocket = (game.player1.socket === socket) ? game.player2.socket : game.player1.socket;
+      // packet = {
+      //   type: PacketType.RESULT,
+      //   payload: {
+      //     correct: true,
+      //     message: "Opponent answered correctly! Bomb is coming to you!"
+      //   } 
+      // }
+      // opponentSocket.write(encode(packet));
+      switchActivePlayer(game);
+      const question = getRandomQuestion(game.usedQuestionIds);
+      game.currentQuestion = createActiveQuestion(question, 15000);
+      activePlayer = game.player1.isActive ? game.player1 : game.player2;
+      activePlayer.socket.write(encode(questionPacket(
+        game.currentQuestion.problemId,
+        game.currentQuestion.text,
+        game.currentQuestion.deadline
+      )));
     }
     else {
       let packet = endGamePacket(false, "Wrong answer! You lost.");
@@ -96,6 +142,18 @@ export class GameManager {
       opponentSocket.write(encode(packet));
       removeGame(game.id);
     }
+  }
+  handleStartGame(game: GameSession) {
+    const question = getRandomQuestion(game.usedQuestionIds);
+    game.currentQuestion = createActiveQuestion(question, 15000);
+    const activePlayer = game.player1.isActive ? game.player1 : game.player2;
+    activePlayer.socket.write(encode(questionPacket(
+      game.currentQuestion.problemId,
+      game.currentQuestion.text,
+      game.currentQuestion.deadline
+    )));
+    switchActivePlayer(game);
+    console.log(`Question sent to ${activePlayer.player.name}: ${game.currentQuestion.text}`);
   }
 
 }

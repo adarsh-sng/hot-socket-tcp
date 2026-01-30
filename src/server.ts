@@ -1,7 +1,7 @@
 import net from "node:net";
 import { PacketParser } from "./service/protocol.ts";
 import {  PacketType } from "./types.ts";
-import { GameManager} from "./service/gameConnection.ts";
+import { GameManager} from "./service/gameManager.ts";
 
 const server = net.createServer((socket) => {
   console.log("Client connected!");
