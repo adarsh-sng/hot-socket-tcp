@@ -1,15 +1,17 @@
 import net from "net";
-import { PacketParser } from "./service/protocol.ts";
 import { GameMode, JoinPacket, LeavePacket, PacketType } from "./types.ts";
+import { sendPacket } from "./utils/packetUtils.ts";
+import { PacketParser } from "./service/protocol.ts";
 
-let encode = PacketParser.encode;
 const client = new net.Socket();
+const packetParser = new PacketParser();
 client.on('error', (err) => {
     console.log("❌ Failed to connect to the server:", err.message);
 });
 export const connectClient =  (ip: string) => {
   client.connect(3000, ip);
 }
+
 client.on("connect",()=>{
   let joinPacket:JoinPacket = {
     type: PacketType.JOIN,
@@ -18,16 +20,18 @@ client.on("connect",()=>{
       preferredMode: GameMode.HOT_POTATO
     }
   }
-  client.write(encode(joinPacket))
+  sendPacket(client, joinPacket);
   console.log("Connected to the server");
+})
+
+client.on("data",(data)=>{
+  const messages = packetParser.parse(data);
+    for (const message of messages) {
+      handleServerPacket(client, message);
+    }
 })
 
 
 client.on("close",()=>{
-  // const leavePacket:LeavePacket = { // wont run, since socket is closed 
-  //   type: PacketType.LEAVE
-  // };
-  // client.write(encode(leavePacket));
   console.log("Connection closed");
-
 })

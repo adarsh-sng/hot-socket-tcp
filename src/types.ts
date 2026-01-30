@@ -1,12 +1,12 @@
 // Enums
 export enum PacketType {
-  JOIN = 'JOIN',         
-  LEAVE = 'LEAVE',
-  SUBMIT = 'SUBMIT',
-  GAME_START = 'GAME_START', 
-  QUESTION = 'QUESTION',  
-  RESULT = 'RESULT',       
-  GAME_END = 'GAME_END',   
+  JOIN = 'JOIN',         // client to server
+  LEAVE = 'LEAVE',     // client to server
+  SUBMIT = 'SUBMIT',    // client to server
+  GAME_START = 'GAME_START',  // server to client
+  QUESTION = 'QUESTION',    // server to client
+  RESULT = 'RESULT',       // server to client
+  GAME_END = 'GAME_END',   // server to client
 }
 
 export enum GameState {

@@ -20,6 +20,7 @@ export class PacketHandler {
       case PacketType.SUBMIT:
         this.handleSubmit(socket, message);
         break;
+      
     }
   }
 
