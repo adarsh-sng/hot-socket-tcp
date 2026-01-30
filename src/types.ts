@@ -1,12 +1,12 @@
-// 1. The Definitions (Enum)
+// Enums
 export enum PacketType {
-  JOIN = 'JOIN',           // Client -> Server: "I want to play"
-  GAME_START = 'GAME_START', // Server -> Client: "Match found! Here is your opponent"
-  QUESTION = 'QUESTION',   // Server -> Client: "Solve this before the deadline"
-  SUBMIT = 'SUBMIT',       // Client -> Server: "Here is my answer"
-  RESULT = 'RESULT',       // Server -> Client: "Your answer was Correct/Wrong"
-  GAME_END = 'GAME_END',   // Server -> Client: "Game Over. You Win/Lose"
-  LEAVE = 'LEAVE'          // Client -> Server: "I quit"
+  JOIN = 'JOIN',         
+  LEAVE = 'LEAVE',
+  SUBMIT = 'SUBMIT',
+  GAME_START = 'GAME_START', 
+  QUESTION = 'QUESTION',  
+  RESULT = 'RESULT',       
+  GAME_END = 'GAME_END',   
 }
 
 export enum GameState {
@@ -17,22 +17,40 @@ export enum GameState {
 }
 
 export enum GameMode {
-  HOT_POTATO = 'HOT_POTATO', // Fixed global timer, short turns
-  VOLLEYBALL = 'VOLLEYBALL'  // Timer shrinks every turn
+  HOT_POTATO = 'HOT_POTATO',
+  VOLLEYBALL = 'VOLLEYBALL'
 }
 
 export interface Player {
   id: string;
   name: string;
   preferredMode?: GameMode;
+  socket: any;
 }
-interface PlayerSession {
+
+export interface PlayerSession {
   player: Player;
-  socket: net.Socket;
+  socket: any;
   score: number;
-  hasAnswered: boolean;
-  isActive: boolean; // whose turn it is
+  isActive: boolean;
 }
+
+export interface ActiveQuestion {
+  problemId: string;
+  text: string;
+  correctAnswer: string;
+  startTime: number;
+  deadline: number;
+}
+
+export interface QuestionResult {
+  problemId: string;
+  playerId: string;
+  answer: string;
+  correct: boolean;
+  timestamp: number;
+}
+
 export interface GameSession {
   id: string;
   player1: PlayerSession;
@@ -41,30 +59,27 @@ export interface GameSession {
   state: GameState;
   currentQuestion: ActiveQuestion | null;
   startTime: number;
-  questionHistory: QuestionResult[];
-  
-  // Timers
+  usedQuestionIds: string[]; 
   gameTimer: NodeJS.Timeout | null;
   questionTimer: NodeJS.Timeout | null;
 }
+
 export interface BasePacket {
   type: PacketType;
 }
-
-// --- CLIENT TO SERVER ---
 
 export interface JoinPacket extends BasePacket {
   type: PacketType.JOIN;
   payload: {
     name: string;
-    preferredMode?: GameMode; // Optional: If you want to let them choose
+    preferredMode?: GameMode;
   };
 }
 
 export interface SubmitPacket extends BasePacket {
   type: PacketType.SUBMIT;
   payload: {
-    answer: string; // The user's input (e.g. "4", "Paris", or code)
+    answer: string; 
   };
 }
 
@@ -72,7 +87,7 @@ export interface LeavePacket extends BasePacket {
   type: PacketType.LEAVE;
 }
 
-// --- SERVER TO CLIENT ---
+export type ClientPacket = JoinPacket | SubmitPacket | LeavePacket;
 
 export interface GameStartPacket extends BasePacket {
   type: PacketType.GAME_START;
@@ -87,8 +102,8 @@ export interface QuestionPacket extends BasePacket {
   type: PacketType.QUESTION;
   payload: {
     problemId: string;
-    text: string;      // "What is 2 + 2?"
-    deadline: number; 
+    text: string;
+    deadline: number;
   };
 }
 
@@ -96,7 +111,7 @@ export interface ResultPacket extends BasePacket {
   type: PacketType.RESULT;
   payload: {
     correct: boolean;
-    message: string;   // "Correct! Sending bomb to opponent..." or "Wrong answer!"
+    message: string;
   };
 }
 
@@ -104,14 +119,10 @@ export interface GameEndPacket extends BasePacket {
   type: PacketType.GAME_END;
   payload: {
     won: boolean;
-    reason: string; // "Opponent exploded" or "You ran out of time"
+    reason: string;
   };
 }
-export type GamePacket = 
-  | JoinPacket
-  | GameStartPacket
-  | QuestionPacket
-  | SubmitPacket
-  | ResultPacket
-  | GameEndPacket
-  | LeavePacket;
+
+export type ServerPacket = GameStartPacket | QuestionPacket | ResultPacket | GameEndPacket;
+
+export type GamePacket = ClientPacket | ServerPacket;
