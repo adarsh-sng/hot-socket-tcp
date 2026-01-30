@@ -102,8 +102,6 @@ export class GameManager {
     const game = getGameBySocket(socket);
     if (!game || !game.currentQuestion) return;
     const correct = (message.payload.answer === game.currentQuestion.correctAnswer);
-
-    // 3. If correct → pass bomb
     if (correct) {
       let packet:ResultPacket ={
         type: PacketType.RESULT,
@@ -115,15 +113,6 @@ export class GameManager {
       socket.write(encode(packet));
       let  activePlayer = game.player1.isActive ? game.player1 : game.player2;
        activePlayer.score++;
-      // const opponentSocket = (game.player1.socket === socket) ? game.player2.socket : game.player1.socket;
-      // packet = {
-      //   type: PacketType.RESULT,
-      //   payload: {
-      //     correct: true,
-      //     message: "Opponent answered correctly! Bomb is coming to you!"
-      //   } 
-      // }
-      // opponentSocket.write(encode(packet));
       switchActivePlayer(game);
       const question = getRandomQuestion(game.usedQuestionIds);
       game.currentQuestion = createActiveQuestion(question, 15000);
@@ -152,7 +141,36 @@ export class GameManager {
       game.currentQuestion.text,
       game.currentQuestion.deadline
     )));
+    game.questionTimer = setTimeout(() => {
+      let activePlayer = game.player1.isActive ? game.player1 : game.player2;
+      let packet = endGamePacket(false, "Time's up! You couldn't answer in time");
+      activePlayer.socket.write(encode(packet))
+      packet=endGamePacket(true, "You won! your opponent couldnt answer in time");
+      removeGame(game.id);
+    }, 15000); // 15 seconds to answer
+    game.gameTimer = setTimeout(() => {
+      let activePlayer = game.player1.isActive ? game.player1 : game.player2;
+      activePlayer.score -= 2;
+      let packet: GameEndPacket;
+      if (game.player1.score > game.player2.score) {
+        packet = endGamePacket(true, "Time's up! You won by having a higher score.");
+        game.player1.socket.write(encode(packet));
+        packet = endGamePacket(false, "Time's up! You lost by having a lower score.");
+        game.player2.socket.write(encode(packet));
+      } else if (game.player2.score > game.player1.score) {
+        packet = endGamePacket(true, "Time's up! You won by having a higher score.");
+        game.player2.socket.write(encode(packet));
+        packet = endGamePacket(false, "Time's up! You lost by having a lower score.");
+        game.player1.socket.write(encode(packet));
+      } else {
+        packet = endGamePacket(false, "Time's up! It's a tie, so you both lose.");
+        game.player1.socket.write(encode(packet));
+        game.player2.socket.write(encode(packet));
+      }
+      removeGame(game.id);
+    }, 60000); // 60 seconds for the entire game
     switchActivePlayer(game);
+    game.questionTimer = null
     console.log(`Question sent to ${activePlayer.player.name}: ${game.currentQuestion.text}`);
   }
 
