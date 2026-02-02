@@ -112,6 +112,8 @@ export interface ResultPacket extends BasePacket {
   payload: {
     correct: boolean;
     message: string;
+    myScore: number;
+    opponentScore: number;
   };
 }
 
@@ -120,6 +122,8 @@ export interface GameEndPacket extends BasePacket {
   payload: {
     won: boolean;
     reason: string;
+    myScore: number;
+    opponentScore: number;
   };
 }
 

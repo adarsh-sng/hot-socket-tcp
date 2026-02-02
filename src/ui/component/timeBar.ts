@@ -73,3 +73,5 @@ const questionBar = new ProgressBar({
   width: 20,
   filledChar: '▓'
 });
+
+export { ProgressBar, gameBar, questionBar };

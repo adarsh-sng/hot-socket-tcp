@@ -14,10 +14,10 @@ export const createStartGamePacket = (gameId: string, opponentName: string, mode
   };
 };
 
-export const createEndGamePacket = (won: boolean, reason: string): GameEndPacket => {
+export const createEndGamePacket = (won: boolean, reason: string, myScore: number, opponentScore: number): GameEndPacket => {
   return {
     type: PacketType.GAME_END,
-    payload: { won, reason }
+    payload: { won, reason, myScore, opponentScore }
   };
 };
 
@@ -28,9 +28,9 @@ export const createQuestionPacket = (problemId: string, text: string, deadline: 
   };
 };
 
-export const createResultPacket = (correct: boolean, message: string): ResultPacket => {
+export const createResultPacket = (correct: boolean, message: string, myScore: number, opponentScore: number): ResultPacket => {
   return {
     type: PacketType.RESULT,
-    payload: { correct, message }
+    payload: { correct, message, myScore, opponentScore }
   };
 };
