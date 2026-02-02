@@ -20,6 +20,7 @@ export class PacketHandler {
       case PacketType.SUBMIT:
         this.handleSubmit(socket, message);
         break;
+      
     }
   }
 
@@ -50,7 +51,10 @@ export class PacketHandler {
     if (game) {
       clearAllTimers(game);
       const opponentSocket = getOpponentSocket(game, socket);
-      const packet = createEndGamePacket(true, "Opponent left the game.");
+      const isPlayer1Leaving = socket === game.player1.socket;
+      const winnerScore = isPlayer1Leaving ? game.player2.score : game.player1.score;
+      const loserScore = isPlayer1Leaving ? game.player1.score : game.player2.score;
+      const packet = createEndGamePacket(true, "Opponent left the game.", winnerScore, loserScore);
       sendPacket(opponentSocket, packet);
       removeGame(game.id);
     }
@@ -100,17 +104,35 @@ export class PacketHandler {
     }
     const activePlayer = getActivePlayer(game);
     activePlayer.score += GameConfig.CORRECT_ANSWER_POINTS;
-    const resultPacket = createResultPacket(true, "Correct! You passed the bomb!");
+    
+    // Determine which player is which and send appropriate scores
+    const isPlayer1 = socket === game.player1.socket;
+    const myScore = isPlayer1 ? game.player1.score : game.player2.score;
+    const opponentScore = isPlayer1 ? game.player2.score : game.player1.score;
+    
+    // Send result to the player who answered correctly
+    const resultPacket = createResultPacket(true, "Correct! You passed the bomb!", myScore, opponentScore);
     sendPacket(socket, resultPacket);
+    
+    // Send score update to the opponent
+    const opponentSocket = getOpponentSocket(game, socket);
+    const opponentResultPacket = createResultPacket(false, "Opponent passed the bomb to you!", opponentScore, myScore);
+    sendPacket(opponentSocket, opponentResultPacket);
+    
     switchActivePlayer(game);
     this.sendNextQuestion(game);
   }
 
   private handleWrongAnswer(game: GameSession, socket: any): void {
-    const losePacket = createEndGamePacket(false, "Wrong answer! You lost.");
+    const isPlayer1 = socket === game.player1.socket;
+    const loserScore = isPlayer1 ? game.player1.score : game.player2.score;
+    const winnerScore = isPlayer1 ? game.player2.score : game.player1.score;
+    
+    const losePacket = createEndGamePacket(false, "Wrong answer! You lost.", loserScore, winnerScore);
     sendPacket(socket, losePacket);
+    
     const opponentSocket = getOpponentSocket(game, socket);
-    const winPacket = createEndGamePacket(true, "Opponent answered incorrectly! You won.");
+    const winPacket = createEndGamePacket(true, "Opponent answered incorrectly! You won.", winnerScore, loserScore);
     sendPacket(opponentSocket, winPacket);
     removeGame(game.id);
   }
